@@ -33,7 +33,19 @@ class Plotter(EventHandler):
     def show(self):
         plt.plot(self.bid_ask_tss, self.bids_prices, 'g')
         plt.plot(self.bid_ask_tss, self.asks_prices, 'r')
+
         plt.plot(self.buy_trade_tss, self.buy_trade_prices, 'ob')
         plt.plot(self.sell_trade_tss, self.sell_trade_prices, 'oy')
+
+        min_ts = min([self.bid_ask_tss[0], self.buy_trade_tss[0], self.sell_trade_tss[0]])
+        max_ts = max([self.bid_ask_tss[-1], self.buy_trade_tss[-1], self.sell_trade_tss[-1]])
+
+        min_ts = (min_ts // 86400000 + 0) * 86400000
+        max_ts = (max_ts // 86400000 + 1) * 86400000
+
+        plt.vlines([min_ts + i * 86400000 + 7  * 3600000 for i in range((max_ts - min_ts) // 86400000)], ymin=min(self.bids_prices), ymax=max(self.asks_prices))
+        plt.vlines([min_ts + i * 86400000 + 21 * 3600000 for i in range((max_ts - min_ts) // 86400000)], ymin=min(self.bids_prices), ymax=max(self.asks_prices))
+
         plt.xticks([])
+        
         plt.show()
