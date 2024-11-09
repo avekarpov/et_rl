@@ -26,5 +26,8 @@ class OrderBook:
     bids = []
     asks = []
 
+    def __len__(self):
+        return len(self.bids) + len(self.asks)
+
     def __str__(self):
         return f'{{"bids": {self.bids}, "asks": {self.asks}}}'

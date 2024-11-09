@@ -12,7 +12,7 @@ class TradeParser(BaseParser):
         order.price = float(f'{whole}.{fractional}')
         order.amount = float(next(line_iterator))
 
-        event = Event(next(line_iterator))
+        event = Event(int(next(line_iterator)))
         event.value = ('trade', order)
 
         return event

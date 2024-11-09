@@ -4,6 +4,8 @@ from event import Event
 
 
 class OrderBookParser(BaseParser):
+    fix_price_crossing=False
+
     def parse_csv_line(self, line):
         def parse(side: Side, line_iterator):
             deep_size = 50
@@ -25,16 +27,29 @@ class OrderBookParser(BaseParser):
         order_book.bids = parse(Side.Buy, line_iterator)
         order_book.asks = parse(Side.Sell, line_iterator)
 
-        event = Event(next(line_iterator))
+        if self.fix_price_crossing:
+            while order_book.asks[0].price <= order_book.bids[0].price:
+                if len(order_book) % 2 == 0:
+                    self.logger.warning(
+                        f'Fix price crossing by ask: '
+                        f'ask price: {order_book.asks[0].price} <= bid price: {order_book.bids[0].price} '
+                        f'new best ask price: {order_book.asks[1].price}'
+                    )
+
+                    order_book.asks[1].amount += order_book.asks[0].amount
+                    order_book.asks.pop(0)
+                else:
+                    self.logger.warning(
+                        f'Fix price crossing by bid: '
+                        f'ask price: {order_book.asks[0].price} <= bid price: {order_book.bids[0].price} '
+                        f'new best bid price: {order_book.bids[1].price}'
+                    )
+
+                    order_book.bids[1].amount += order_book.bids[0].amount
+                    order_book.bids.pop(0)
+                
+
+        event = Event(int(next(line_iterator)))
         event.value = ('order_book', order_book)
 
         return event
-        
-
-if __name__ == '__main__':
-    parser = OrderBookParser(['/home/artem/Downloads/Market data/Market data/gazp/gazp_order_book_stream_20240422085001'])
-
-    for event in parser:
-        print(event)
-
-        break
