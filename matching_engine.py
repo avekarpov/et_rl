@@ -1,12 +1,15 @@
-from order_book import Order
+from order_book import Order, Side
 from event import Event, EventHandler
+from wallet import Wallet
 
 # Simple matching engine, fill only market orders
 class MarketMatchingEngine(EventHandler):
+    wallet = Wallet()
+
     market_order = Order()
 
     def process_event_order_book(self, event):
-        return []
+        return self.wallet.process_event_order_book(event)
 
     def process_event_trade(self, trade_event):
 
@@ -21,17 +24,18 @@ class MarketMatchingEngine(EventHandler):
             self.market_order.amount -= fill_amount
 
             fill = Order()
+            fill.side = self.market_order.side
             fill.amount = fill_amount
             fill.price = trade.price
 
             fill_event = Event(trade_event.ts)
             fill_event.value = ('fill', fill)
 
-            return [fill_event]
+            return [fill_event] + self.wallet.process_event_fill(fill_event)
         
         return []
 
-    def prorcess_event_place_market(self, place_market):
+    def process_event_place_market(self, place_market):
         assert hasattr(place_market, 'place_market')
         assert place_market.value.price == 0.0
 

@@ -27,13 +27,25 @@ class EventHandler:
         elif event.name == 'trade':
             return self.process_event_trade(event)
         elif event.name == 'place_market':
-            return self.prorcess_event_place_market(event)
+            return self.process_event_place_market(event)
+        elif event.name == 'fill':
+            return self.process_event_fill(event)
+        elif event.name == 'trade_result':
+            return self.process_event_pnl(event)
+        else:
+            assert False
         
     def process_event_order_book(self, event):
-        pass
+        return []
 
     def process_event_trade(self, event):
-        pass
+        return []
 
-    def prorcess_event_place_market(self, event):
-        pass
+    def process_event_place_market(self, event):
+        return []
+
+    def process_event_fill(self, event):
+        return []
+    
+    def process_event_pnl(self, event):
+        return []
