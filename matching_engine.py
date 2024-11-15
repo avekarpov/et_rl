@@ -8,12 +8,12 @@ class MarketMatchingEngine(EventHandler):
 
     market_order = Order()
 
+    last_fill = None
+
     def process_event_order_book(self, event):
         return self.wallet.process_event_order_book(event)
 
     def process_event_trade(self, trade_event):
-
-
         trade = trade_event.value
 
         if trade.side == self.market_order.side:
@@ -23,13 +23,13 @@ class MarketMatchingEngine(EventHandler):
         if fill_amount != 0.0:
             self.market_order.amount -= fill_amount
 
-            fill = Order()
-            fill.side = self.market_order.side
-            fill.amount = fill_amount
-            fill.price = trade.price
+            self.last_fill = Order()
+            self.last_fill.side = self.market_order.side
+            self.last_fill.amount = fill_amount
+            self.last_fill.price = trade.price
 
             fill_event = Event(trade_event.ts)
-            fill_event.value = ('fill', fill)
+            fill_event.value = ('fill', self.last_fill)
 
             return [fill_event] + self.wallet.process_event_fill(fill_event)
         
@@ -54,3 +54,12 @@ class MarketMatchingEngine(EventHandler):
                     self.market_order = order
 
         return []
+
+    def state(self):
+        result = {'market_order': self.market_order, 'last_fill': self.last_fill}
+        result.update(self.wallet.state())
+        return result
+
+    def reset(self):
+        self.market_order = Order()
+        self.wallet.reset()

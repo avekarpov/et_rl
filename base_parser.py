@@ -43,3 +43,7 @@ class BaseParser:
                 return self.parse_csv_line(line)
             except Exception as error:
                 self.logger.warning(f'Failed to parse line "{self.file_paths[self.index]}:{line}": {error}')
+
+    def reset(self):
+        self.index = 0
+        self.reader = None

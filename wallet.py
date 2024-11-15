@@ -15,6 +15,8 @@ class Wallet(EventHandler):
 
     fill_events = []
 
+    last_pnl = None
+
     def process_event_fill(self, fill_event):
         if self.pnl_window_s != 0:
             while len(self.fill_events) != 0 and self.fill_events[0].ts + self.pnl_window_s * 1000 < fill_event.ts:
@@ -52,8 +54,10 @@ class Wallet(EventHandler):
         else:
             price = event.value.asks[0].price
 
+        self.last_pnl = self.fiat / price + self.postion * self.pnl_position_coef
+
         trade_result = TradeResult()
-        trade_result.pnl = self.pnl(price)
+        trade_result.pnl = self.last_pnl
         trade_result.position = self.postion
         trade_result.fiat = self.fiat
 
@@ -62,5 +66,10 @@ class Wallet(EventHandler):
 
         return [pnl]
 
-    def pnl(self, price):
-        return self.fiat / price + self.postion * self.pnl_position_coef
+    def state(self):
+        return {'last_pnl': self.last_pnl}
+
+    def reset(self):
+        self.postion = 0
+        self.fiat = 0
+        self.fill_events = []

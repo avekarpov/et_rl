@@ -8,10 +8,10 @@ class OrderBookParser(BaseParser):
 
     def parse_csv_line(self, line):
         def parse(side: Side, line_iterator):
-            deep_size = 50
+            depth_size = 50
 
             order_book_side = []
-            for i in range(deep_size):
+            for i in range(depth_size):
                 order = Order()
                 (whole, fractional) = next(line_iterator).split(':')
                 order.price = float(f'{whole}.{fractional}')
