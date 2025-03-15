@@ -2,6 +2,7 @@ from __future__ import annotations
 from enum import Enum
 from decimal import Decimal
 from typing import List
+from datetime import datetime
 
 
 class Side(Enum):
@@ -26,6 +27,10 @@ Price = Decimal
 # TODO: make as class Quntity(Decimal)
 # TODO: only from str or int
 Quntity = Decimal
+
+
+# TODO: make as class Quntity(Decimal)
+Timestamp = datetime
 
 
 class MarketOrder:
@@ -70,6 +75,9 @@ class OrderBook:
         return f'{{"bids":{self.bids},"asks":{self.asks}}}'
 
 
+class Trade(LimitOrder):
+    pass
+    
 # Tests ################################################################################################################
 
 
@@ -142,10 +150,12 @@ if __name__ == '__main__':
 __all__ = [
     'Side', 
     'Price', 
-    'Quntity', 
+    'Quntity',
+    'Timestamp',
     'MarketOrder', 
     'LimitOrder', 
     'OrderBookLevel', 
     'OrderBookSide',
-    'OrderBook'
+    'OrderBook',
+    'Trade'
 ]
