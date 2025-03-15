@@ -66,7 +66,7 @@ class OrderBookSide(List[OrderBookLevel]):
         return f'[{",".join(str(level) for level in self)}]'
     
 
-class OrderBook:
+class OrderBookSnaphot:
     def __init__(self):
         self.bids = OrderBookSide(Side.Buy)
         self.asks = OrderBookSide(Side.Sell)
@@ -126,9 +126,9 @@ class TestOrderBookSide:
             ']'
 
 
-class TestOrderBook:
+class TestOrderBookSnaphot:
     def test_to_str(context):
-        order_book = OrderBook()
+        order_book = OrderBookSnaphot()
         order_book.bids.append(OrderBookLevel(Side.Buy, Price("90"), Quntity("42")))
         order_book.asks.append(OrderBookLevel(Side.Sell, Price("95"), Quntity("42")))
 
@@ -156,6 +156,6 @@ __all__ = [
     'LimitOrder', 
     'OrderBookLevel', 
     'OrderBookSide',
-    'OrderBook',
+    'OrderBookSnaphot',
     'Trade'
 ]

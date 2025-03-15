@@ -14,9 +14,12 @@ class TradeEvent(Event):
 
 
 class OrderBookUpdate(Event):
-    def __init__(self, order_book: OrderBook, ts: Timestamp):
+    def __init__(self, snapshot: OrderBookSnaphot, ts: Timestamp):
         super().__init__(ts)
-        self.order_book = order_book
+        self.snapshot = snapshot
 
     # TODO: implement __str__
 
+
+class OrderBookUpdateFull(OrderBookUpdate):
+    pass
