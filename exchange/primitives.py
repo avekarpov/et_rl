@@ -1,3 +1,4 @@
+from __future__ import annotations
 from enum import Enum
 from decimal import Decimal
 from typing import List
@@ -9,6 +10,12 @@ class Side(Enum):
 
     def __str__(self):
         return '"buy"' if self.value == Side.Buy.value else '"sell"'
+
+    def another(self):
+        if self.value == self.Buy.value:
+            return self.Sell
+        else:
+            return self.Buy
 
 
 # TODO: make as class Price(Decimal)
@@ -22,7 +29,7 @@ Quntity = Decimal
 
 
 class MarketOrder:
-    def __init__(self, side: Side, quntity: Quntity):
+    def __init__(self, side: Side = Side.Buy, quntity: Quntity = Quntity('0')):
         self.side = side
         self.quntity = quntity
 
@@ -70,6 +77,10 @@ class TestSide:
     def test_to_str(context):
         assert str(Side.Buy) == '"buy"'
         assert str(Side.Sell) == '"sell"'
+
+    def test_antoter(context):
+        assert Side.Buy.another() == Side.Sell
+        assert Side.Sell.another() == Side.Buy
 
 
 class TestMarketOrder:
@@ -123,3 +134,18 @@ class TestOrderBook:
 if __name__ == '__main__':
     import pytest
     pytest.main(["-v", __file__])
+
+
+# Hide tests from import ###############################################################################################
+
+
+__all__ = [
+    'Side', 
+    'Price', 
+    'Quntity', 
+    'MarketOrder', 
+    'LimitOrder', 
+    'OrderBookLevel', 
+    'OrderBookSide',
+    'OrderBook'
+]
