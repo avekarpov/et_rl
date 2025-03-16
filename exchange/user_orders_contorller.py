@@ -1,13 +1,18 @@
 from primitives import *
 from events import *
+from router import Router
 
 
 class UserOrdersController:
-    def __init__(self):
+    def __init__(self, router: Router):
+        self.router = router
+        self.router.set_user_orders_contorller(self)
+
         self.summary_market_order = MarketOrder()
 
-    def on_user_place_market_order(self, event: PlaceUserMarketOrder):
+    def on_user_place_market_order(self, event: PlaceUserMarketOrderEvent):
         self._add_market_order(event.order)
+        self.router.on_user_market_order_placed(UserMarketOrderPlacedEvent(event.ts))
 
     def on_user_fill(self, event: UserFillEvent):
         assert event.user_fill.side == self.summary_market_order.side

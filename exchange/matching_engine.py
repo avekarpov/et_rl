@@ -1,11 +1,14 @@
 from primitives import *
 from user_orders_contorller import UserOrdersController
 from events import *
+from router import Router
 
 
 class MatchingEngine:
-    def __init__(self, router, user_orders_contorller: UserOrdersController):
+    def __init__(self, router: Router, user_orders_contorller: UserOrdersController):
         self.router = router
+        self.router.set_matching_engine(self)
+
         self.user_orders_contorller = user_orders_contorller
 
     def on_historical_trade(self, event: HistoricalTradeEvent):

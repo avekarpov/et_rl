@@ -21,7 +21,7 @@ class HistoricalOrderBookUpdate(Event):
     # TODO: implement __str__
 
 
-class OrderBookUpdate(HistoricalOrderBookUpdate):
+class OrderBookUpdateEvent(HistoricalOrderBookUpdate):
     pass
 
     # TODO: implement __str__
@@ -41,9 +41,13 @@ class UserFillEvent(Event):
     # TODO: implement __str__
 
 
-class PlaceUserMarketOrder(Event):
+class PlaceUserMarketOrderEvent(Event):
     def __init__(self, order: MarketOrder, ts: Timestamp):
         super().__init__(ts)
         self.order = order
 
     # TODO: implement __str__
+
+
+class UserMarketOrderPlacedEvent(Event):
+    pass
