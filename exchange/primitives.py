@@ -24,31 +24,31 @@ class Side(Enum):
 Price = Decimal
 
 
-# TODO: make as class Quntity(Decimal)
+# TODO: make as class Quantity(Decimal)
 # TODO: only from str or int
-Quntity = Decimal
+Quantity = Decimal
 
 
-# TODO: make as class Quntity(Decimal)
+# TODO: make as class Quantity(Decimal)
 Timestamp = datetime
 
 
 class MarketOrder:
-    def __init__(self, side: Side = Side.Buy, quntity: Quntity = Quntity('0')):
+    def __init__(self, side: Side = Side.Buy, quantity: Quantity = Quantity('0')):
         self.side = side
-        self.quntity = quntity
+        self.quantity = quantity
 
     def __str__(self):
-        return f'{{"side":{self.side},"quantity":{self.quntity}}}'
+        return f'{{"side":{self.side},"quantity":{self.quantity}}}'
 
 
 class LimitOrder(MarketOrder):
-    def __init__(self, side: Side, price: Price, quntity: Quntity):
-        super().__init__(side, quntity)
+    def __init__(self, side: Side, price: Price, quantity: Quantity):
+        super().__init__(side, quantity)
         self.price = price
 
     def __str__(self):
-        return f'{{"side":{self.side},"price":{self.price},"quantity":{self.quntity}}}'
+        return f'{{"side":{self.side},"price":{self.price},"quantity":{self.quantity}}}'
 
 
 class OrderBookLevel(LimitOrder):
@@ -77,7 +77,12 @@ class OrderBookSnaphot:
 
 class Trade(LimitOrder):
     pass
-    
+
+
+class UserFill(LimitOrder):
+    pass
+
+
 # Tests ################################################################################################################
 
 
@@ -93,30 +98,30 @@ class TestSide:
 
 class TestMarketOrder:
     def test_to_str(context):
-        order = MarketOrder(Side.Buy, Quntity("100"))
+        order = MarketOrder(Side.Buy, Quantity("100"))
 
         assert str(order) == '{"side":"buy","quantity":100}'
 
 
 class TestLimitOrder:
     def test_to_str(context):
-        order = LimitOrder(Side.Buy, Price("1000"), Quntity("100"))
+        order = LimitOrder(Side.Buy, Price("1000"), Quantity("100"))
 
         assert str(order) == '{"side":"buy","price":1000,"quantity":100}'
 
 
 class TestOrderBookLevel:
     def test_to_str(context):
-        level = OrderBookLevel(Side.Buy, Price("1000"), Quntity("100"))
+        level = OrderBookLevel(Side.Buy, Price("1000"), Quantity("100"))
 
         assert str(level) == '{"side":"buy","price":1000,"quantity":100}'
 
 class TestOrderBookSide:
     def test_to_str(context):
         side = OrderBookSide(Side.Buy)
-        side.append(OrderBookLevel(Side.Buy, Price("90"), Quntity("42")))
-        side.append(OrderBookLevel(Side.Buy, Price("80"), Quntity("42")))
-        side.append(OrderBookLevel(Side.Buy, Price("70"), Quntity("42")))
+        side.append(OrderBookLevel(Side.Buy, Price("90"), Quantity("42")))
+        side.append(OrderBookLevel(Side.Buy, Price("80"), Quantity("42")))
+        side.append(OrderBookLevel(Side.Buy, Price("70"), Quantity("42")))
 
         assert str(side) == \
             '[' \
@@ -129,8 +134,8 @@ class TestOrderBookSide:
 class TestOrderBookSnaphot:
     def test_to_str(context):
         order_book = OrderBookSnaphot()
-        order_book.bids.append(OrderBookLevel(Side.Buy, Price("90"), Quntity("42")))
-        order_book.asks.append(OrderBookLevel(Side.Sell, Price("95"), Quntity("42")))
+        order_book.bids.append(OrderBookLevel(Side.Buy, Price("90"), Quantity("42")))
+        order_book.asks.append(OrderBookLevel(Side.Sell, Price("95"), Quantity("42")))
 
         assert str(order_book) == \
             '{' \
@@ -150,12 +155,13 @@ if __name__ == '__main__':
 __all__ = [
     'Side', 
     'Price', 
-    'Quntity',
+    'Quantity',
     'Timestamp',
     'MarketOrder', 
     'LimitOrder', 
     'OrderBookLevel', 
     'OrderBookSide',
     'OrderBookSnaphot',
-    'Trade'
+    'Trade',
+    'UserFill'
 ]

@@ -1,20 +1,30 @@
 from primitives import *
+from events import *
 
 
 class UserOrdersController:
     def __init__(self):
         self.summary_market_order = MarketOrder()
 
-    def add_market_order(self, order: MarketOrder):
-        if self.summary_market_order.side == order.side:
-            self.summary_market_order.quntity += order.quntity
-        elif self.summary_market_order.quntity > order.quntity:
-            self.summary_market_order.quntity -= order.quntity
+    def on_user_place_market_order(self, event: PlaceUserMarketOrder):
+        self._add_market_order(event.order)
+
+    def on_user_fill(self, event: UserFillEvent):
+        assert event.user_fill.side == self.summary_market_order.side
+        assert event.user_fill.quantity <= self.summary_market_order.quantity
+
+        self._add_market_order_quantity(event.user_fill.side.another(), event.user_fill.quantity)
+
+    def _add_market_order_quantity(self, side: Side, quantity: Quantity):
+        if self.summary_market_order.side == side:
+            self.summary_market_order.quantity += quantity
+        elif quantity <= self.summary_market_order.quantity:
+            self.summary_market_order.quantity -= quantity
         else:
-            self.summary_market_order.quntity = order.quntity - self.summary_market_order.quntity
+            self.summary_market_order.quantity = quantity - self.summary_market_order.quantity
             self.summary_market_order.side = self.summary_market_order.side.another()
         
-        assert self.summary_market_order.quntity >= Quntity('0')
+        assert self.summary_market_order.quantity >= Quantity('0')
 
     def __str__(self):
         return f'{{"summary_market_order":{self.summary_market_order}}}'
@@ -28,24 +38,24 @@ class TestUserOrdersController:
         controller = UserOrdersController()
         assert str(controller) == '{"summary_market_order":{"side":"buy","quantity":0}}'
 
-    def test_add_market_order(context):
+    def test_add_market_order_quantity(context):
         controller = UserOrdersController()
 
-        controller.add_market_order(MarketOrder(Side.Buy, Quntity(10)))
+        controller._add_market_order_quantity(Side.Buy, Quantity(10))
         assert controller.summary_market_order.side == Side.Buy
-        assert controller.summary_market_order.quntity == Quntity(10)
+        assert controller.summary_market_order.quantity == Quantity(10)
 
-        controller.add_market_order(MarketOrder(Side.Buy, Quntity(32)))
+        controller._add_market_order_quantity(Side.Buy, Quantity(32))
         assert controller.summary_market_order.side == Side.Buy
-        assert controller.summary_market_order.quntity == Quntity(42)
+        assert controller.summary_market_order.quantity == Quantity(42)
 
-        controller.add_market_order(MarketOrder(Side.Sell, Quntity(12)))
+        controller._add_market_order_quantity(Side.Sell, Quantity(12))
         assert controller.summary_market_order.side == Side.Buy
-        assert controller.summary_market_order.quntity == Quntity(30)
+        assert controller.summary_market_order.quantity == Quantity(30)
 
-        controller.add_market_order(MarketOrder(Side.Sell, Quntity(50)))
+        controller._add_market_order_quantity(Side.Sell, Quantity(50))
         assert controller.summary_market_order.side == Side.Sell
-        assert controller.summary_market_order.quntity == Quntity(20)
+        assert controller.summary_market_order.quantity == Quantity(20)
 
 
 if __name__ == '__main__':

@@ -5,7 +5,7 @@ class Event:
         self.ts = ts
 
 
-class TradeEvent(Event):
+class HistoricalTradeEvent(Event):
     def __init__(self, trade: Trade, ts: Timestamp):
         super().__init__(ts)
         self.trade = trade
@@ -13,7 +13,7 @@ class TradeEvent(Event):
     # TODO: implement __str__
 
 
-class OrderBookUpdate(Event):
+class HistoricalOrderBookUpdate(Event):
     def __init__(self, snapshot: OrderBookSnaphot, ts: Timestamp):
         super().__init__(ts)
         self.snapshot = snapshot
@@ -21,5 +21,29 @@ class OrderBookUpdate(Event):
     # TODO: implement __str__
 
 
-class OrderBookUpdateFull(OrderBookUpdate):
+class OrderBookUpdate(HistoricalOrderBookUpdate):
     pass
+
+    # TODO: implement __str__
+
+
+class TradeEvent(HistoricalTradeEvent):
+    pass
+
+    # TODO: implement __str__
+
+
+class UserFillEvent(Event):
+    def __init__(self, user_fill: UserFill, ts):
+        super().__init__(ts)
+        self.user_fill = user_fill
+
+    # TODO: implement __str__
+
+
+class PlaceUserMarketOrder(Event):
+    def __init__(self, order: MarketOrder, ts: Timestamp):
+        super().__init__(ts)
+        self.order = order
+
+    # TODO: implement __str__

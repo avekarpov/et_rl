@@ -8,5 +8,8 @@ class OrderBook:
         self.router = router
         self.user_orders_contorller = user_orders_contorller
 
-    def on_order_book_update(self, event: OrderBookUpdate):
-        self.router.on_order_book_update_full(OrderBookUpdateFull(event.snapshot, event.ts))
+    def on_historical_order_book_update(self, event: HistoricalOrderBookUpdate):
+        self.router.on_order_book_update(OrderBookUpdate(event.snapshot, event.ts))
+
+
+# TODO: add tests
