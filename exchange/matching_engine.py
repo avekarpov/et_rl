@@ -16,6 +16,7 @@ class MatchingEngine:
             fill_quantity = min(event.trade.quantity, self._user_market_order_quantity())
 
             self.router.on_user_fill(UserFillEvent(UserFill(event.trade.side, event.trade.price, fill_quantity)))
+            self.router.on_trade(TradeEvent(Trade(event.trade.side, event.trade.price, fill_quantity)))
 
             if fill_quantity < event.trade.quantity:
                 self.router.on_trade(TradeEvent(Trade(event.trade.side, event.trade.price, event.trade.quantity - fill_quantity)))
