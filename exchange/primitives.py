@@ -12,6 +12,9 @@ class Side(Enum):
     def __str__(self):
         return '"buy"' if self.value == Side.Buy.value else '"sell"'
 
+    def __repr__(self):
+        return str(self)
+
     def another(self):
         if self.value == self.Buy.value:
             return self.Sell
@@ -41,6 +44,9 @@ class MarketOrder:
     def __str__(self):
         return f'{{"side":{self.side},"quantity":{self.quantity}}}'
 
+    def __repr__(self):
+        return str(self)
+
 
 class LimitOrder(MarketOrder):
     def __init__(self, side: Side, price: Price, quantity: Quantity):
@@ -50,6 +56,12 @@ class LimitOrder(MarketOrder):
     def __str__(self):
         return f'{{"side":{self.side},"price":{self.price},"quantity":{self.quantity}}}'
 
+    def __repr__(self):
+        return str(self)
+
+    def __eq__(self, other: LimitOrder):
+        assert self.side == other.side
+        return self.price == other.price and self.quantity == other.quantity
 
 class OrderBookLevel(LimitOrder):
     pass
@@ -65,6 +77,21 @@ class OrderBookSide(List[OrderBookLevel]):
     def __str__(self):
         return f'[{",".join(str(level) for level in self)}]'
     
+    def __repr__(self):
+        return str(self)
+
+    def append(self, level: OrderBookLevel):
+        assert self.side == level.side
+        super().append(level)
+
+    def insert(self, index, level: OrderBookLevel):
+        assert self.side == level.side
+        return super().insert(index, level)
+
+    def __eq__(self, other: OrderBookSide):
+        assert self.side == other.side
+        return super().__eq__(other)
+
 
 class OrderBookSnaphot:
     def __init__(self):
@@ -73,6 +100,18 @@ class OrderBookSnaphot:
 
     def __str__(self):
         return f'{{"bids":{self.bids},"asks":{self.asks}}}'
+
+    def __repr__(self):
+        return str(self)
+
+    def __getitem__(self, side: Side):
+        if side == Side.Buy:
+            return self.bids
+        else:
+            return self.asks
+
+    def __eq__(self, other: OrderBookSnaphot):
+        return self.bids == other.bids and self.asks == other.asks
 
 
 class Trade(LimitOrder):

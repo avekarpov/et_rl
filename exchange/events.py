@@ -1,11 +1,11 @@
 from primitives import *
 
-class Event:
+class EventBase:
     def __init__(self, ts: Timestamp):
         self.ts = ts
 
 
-class HistoricalTradeEvent(Event):
+class HistoricalTradeEvent(EventBase):
     def __init__(self, trade: Trade, ts: Timestamp):
         super().__init__(ts)
         self.trade = trade
@@ -13,7 +13,7 @@ class HistoricalTradeEvent(Event):
     # TODO: implement __str__
 
 
-class HistoricalOrderBookUpdate(Event):
+class HistoricalOrderBookUpdate(EventBase):
     def __init__(self, snapshot: OrderBookSnaphot, ts: Timestamp):
         super().__init__(ts)
         self.snapshot = snapshot
@@ -33,7 +33,7 @@ class TradeEvent(HistoricalTradeEvent):
     # TODO: implement __str__
 
 
-class UserFillEvent(Event):
+class UserFillEvent(EventBase):
     def __init__(self, user_fill: UserFill, ts):
         super().__init__(ts)
         self.user_fill = user_fill
@@ -41,7 +41,7 @@ class UserFillEvent(Event):
     # TODO: implement __str__
 
 
-class PlaceUserMarketOrderEvent(Event):
+class PlaceUserMarketOrderEvent(EventBase):
     def __init__(self, order: MarketOrder, ts: Timestamp):
         super().__init__(ts)
         self.order = order
@@ -49,5 +49,5 @@ class PlaceUserMarketOrderEvent(Event):
     # TODO: implement __str__
 
 
-class UserMarketOrderPlacedEvent(Event):
+class UserMarketOrderPlacedEvent(EventBase):
     pass

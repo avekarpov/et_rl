@@ -1,10 +1,9 @@
 from primitives import *
 from events import *
-from router import Router
 
 
 class UserOrdersController:
-    def __init__(self, router: Router):
+    def __init__(self, router):
         self.router = router
         self.router.set_user_orders_contorller(self)
 
