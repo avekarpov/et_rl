@@ -9,6 +9,8 @@ class Runner:
 
         self.next_historical_trade = None
         self.next_historical_order_book_update = None
+        
+        self.last_ts = 0
 
     def set_trade_parser(self, parser):
         self.trade_parser = parser
@@ -22,6 +24,9 @@ class Runner:
     def __next__(self):
         next_trade = self._get_next_historical_trade()
         next_ob_update = self._get_next_historical_order_book_update()
+
+        assert self.last_ts <= next_trade.ts
+        assert self.last_ts <= next_ob_update.ts
 
         if next_trade is not None and next_ob_update is not None:
             if next_trade.ts < next_ob_update.ts:

@@ -6,8 +6,12 @@ import json
 
 class ParserBase:
     class FilesStream:
-        def __init__(self, file_paths: List[str]):
-            self.file_paths = iter(file_paths)
+        def __init__(self):
+            self.file_paths = iter([])
+            self.current_file = None
+
+        def set_files(self, file_paths: List[str]):
+            self.file_paths = iter(sorted(file_paths))
             self.current_file = None
 
         def __iter__(self):
@@ -38,7 +42,7 @@ class ParserBase:
         return self
 
 
-class OrderBookParser(ParserBase):
+class OrderBookUpdateParser(ParserBase):
     '''
     Snashot:
     {
@@ -76,8 +80,8 @@ class OrderBookParser(ParserBase):
     }
     '''
 
-    def __init__(self, file_paths):
-        super().__init__(file_paths)
+    def __init__(self):
+        super().__init__()
         self.event = HistoricalOrderBookUpdate(OrderBookSnaphot(), None)
 
     def __next__(self):
@@ -93,7 +97,7 @@ class OrderBookParser(ParserBase):
             return self.event
 
     def _parse_and_apply_line(self, line) -> bool:
-        OrderBookParser._parse_line(self.event, line)
+        OrderBookUpdateParser._parse_line(self.event, line)
         return len(self.event.snapshot.bids) != 0 and len(self.event.snapshot.asks) != 0
 
     @staticmethod 
@@ -103,7 +107,7 @@ class OrderBookParser(ParserBase):
         commands = data['commands']
 
         for command in commands:
-            OrderBookParser._parse_commands(event.snapshot, command)
+            OrderBookUpdateParser._parse_commands(event.snapshot, command)
 
         event.ts = Timestamp.strptime(data['timestamp'][:26], "%Y-%m-%d %H:%M:%S.%f")
 
@@ -163,8 +167,8 @@ class TradeParser(ParserBase):
     }
     '''
 
-    def __init__(self, file_paths):
-        super().__init__(file_paths)
+    def __init__(self):
+        super().__init__()
         self.next_events: List[HistoricalTradeEvent] = []
 
     def __next__(self):
@@ -201,7 +205,7 @@ class TradeParser(ParserBase):
 # Tests ################################################################################################################
 
 
-class TestOrderBookParser:
+class TestOrderBookUpdateParser:
     # TODO: split test cases
     def test_parse_line(context):
         event = HistoricalOrderBookUpdate(OrderBookSnaphot(), None)
@@ -209,7 +213,7 @@ class TestOrderBookParser:
         # Initial snapshot
         line = '{"timestamp":"2025-03-17 17:04:30.942243347","commands":[["Snapshot","BUY",[["127.11","7027.28"],["127.1","7027.21"]]],["Snapshot","SELL",[["127.12","414.54"],["127.13","414.55"]]]]}'
 
-        OrderBookParser._parse_line(event, line)
+        OrderBookUpdateParser._parse_line(event, line)
         snapshot = OrderBookSnaphot()
         snapshot.bids.append(OrderBookLevel(Side.Buy, Price("127.11"), Quantity("7027.28")))
         snapshot.bids.append(OrderBookLevel(Side.Buy, Price("127.1"), Quantity("7027.21")))
@@ -220,7 +224,7 @@ class TestOrderBookParser:
         # Add middle price level
         line = '{"timestamp":"2025-03-17 17:04:31.530788493","commands":[["Increment","Reason: Depth","BUY",[["127.105","703.21"]]],["Increment","Reason: Depth","SELL",[["127.125","412.33"]]]]}'
 
-        OrderBookParser._parse_line(event, line)
+        OrderBookUpdateParser._parse_line(event, line)
         snapshot = OrderBookSnaphot()
         snapshot.bids.append(OrderBookLevel(Side.Buy, Price("127.11"), Quantity("7027.28")))
         snapshot.bids.append(OrderBookLevel(Side.Buy, Price("127.105"), Quantity("703.21")))
@@ -233,7 +237,7 @@ class TestOrderBookParser:
         # Remove middle price level
         line = '{"timestamp":"2025-03-17 17:04:31.530788493","commands":[["Increment","Reason: Depth","BUY",[["127.105","0"]]],["Increment","Reason: Depth","SELL",[["127.125","0"]]]]}'
 
-        OrderBookParser._parse_line(event, line)
+        OrderBookUpdateParser._parse_line(event, line)
         snapshot = OrderBookSnaphot()
         snapshot.bids.append(OrderBookLevel(Side.Buy, Price("127.11"), Quantity("7027.28")))
         snapshot.bids.append(OrderBookLevel(Side.Buy, Price("127.1"), Quantity("7027.21")))
@@ -244,7 +248,7 @@ class TestOrderBookParser:
         # Add new bests
         line = '{"timestamp":"2025-03-17 17:04:31.530788493","commands":[["Increment","Reason: Depth","BUY",[["127.115","50"]]],["Increment","Reason: Depth","SELL",[["127.116","42"]]]]}'
 
-        OrderBookParser._parse_line(event, line)
+        OrderBookUpdateParser._parse_line(event, line)
         snapshot = OrderBookSnaphot()
         snapshot.bids.append(OrderBookLevel(Side.Buy, Price("127.115"), Quantity("50")))
         snapshot.bids.append(OrderBookLevel(Side.Buy, Price("127.11"), Quantity("7027.28")))
@@ -275,4 +279,4 @@ if __name__ == '__main__':
 # Hide tests from import ###############################################################################################
 
 
-__all__ = ['OrderBookParser', 'TradeParser']
+__all__ = ['OrderBookUpdateParser', 'TradeParser']
