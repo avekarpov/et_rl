@@ -15,7 +15,7 @@ class UserOrdersController(Logger):
     def on_user_place_market_order(self, event: PlaceUserMarketOrderEvent):
         self.log_event(event)
 
-        self._add_market_order(event.order)
+        self._add_market_order_quantity(event.order.side, event.order.quantity)
         self.router.on_user_market_order_placed(UserMarketOrderPlacedEvent(event.ts))
 
     def on_user_fill(self, event: UserFillEvent):

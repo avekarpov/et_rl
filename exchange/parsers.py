@@ -3,7 +3,6 @@ from exchange.events import HistoricalOrderBookUpdate, HistoricalTradeEvent
 from exchange.logging import Logger
 from typing import List
 import json
-from copy import deepcopy as copy # TODO: remove
 
 
 class ParserBase(Logger):

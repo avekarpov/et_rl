@@ -11,7 +11,7 @@ class Router(Logger):
         self.user_orders_contorller: UserOrdersController = None
         self.matching_engine: MatchingEngine = None
         self.order_book: OrderBook = None
-        self.consumer = None
+        self.consumers = []
     
     def set_user_orders_contorller(self, user_orders_contorller: UserOrdersController):
         self.user_orders_contorller = user_orders_contorller
@@ -22,8 +22,8 @@ class Router(Logger):
     def set_order_book(self, order_book: OrderBook):
         self.order_book = order_book
 
-    def set_consumer(self, consumer):
-        self.consumer = consumer
+    def add_consumer(self, consumer):
+        self.consumers.append(consumer)
 
     @staticmethod
     def get_none_object():
@@ -51,12 +51,6 @@ class Router(Logger):
 
         return self.order_book
 
-    def get_consumer(self):
-        if self.consumer is None:
-            return Router.get_none_object()
-        
-        return self.consumer
-
     def on_historical_trade(self, event: HistoricalTradeEvent):
         self.log_event(event)
         self.get_matching_engine().on_historical_trade(event)
@@ -71,20 +65,24 @@ class Router(Logger):
     
     def on_user_market_order_placed(self, event: UserMarketOrderPlacedEvent):
         self.log_event(event)
-        self.get_consumer().on_user_market_order_placed(event)
+        self._for_all_consumers(event, 'on_user_market_order_placed')
 
     def on_user_fill(self, event: UserFillEvent):
         self.log_event(event)
         self.get_user_orders_contorller().on_user_fill(event)
-        self.get_consumer().on_user_fill(event)
+        self._for_all_consumers(event, 'on_user_fill')
     
     def on_order_book_update(self, event: OrderBookUpdateEvent):
         self.log_event(event)
-        self.get_consumer().on_order_book_update(event)
+        self._for_all_consumers(event, 'on_order_book_update')
 
     def on_trade(self, event: TradeEvent):
         self.log_event(event)
-        self.get_consumer().on_trade(event)
+        self._for_all_consumers(event, 'on_trade')
+
+    def _for_all_consumers(self, event, handler_name):
+        for consumer in self.consumers:
+            getattr(consumer, handler_name)(event)
 
 
 # TODO: add tests

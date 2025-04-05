@@ -26,6 +26,12 @@ class Side(Enum):
             return lhs > rhs
         else:
             return lhs < rhs
+        
+    def sidded(self, value):
+        if self.value == Side.Buy.value:
+            return value
+        else:
+            return -value
 
 
 # TODO: make as class Price(Decimal)

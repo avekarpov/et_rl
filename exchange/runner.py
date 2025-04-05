@@ -15,6 +15,7 @@ class Runner(Logger):
         self.next_historical_order_book_update = None
         
         self.last_ts = Timestamp.min
+        self.until_ts = None
 
     def set_trade_parser(self, parser):
         self.logger.info('Set trade parser')
@@ -25,6 +26,9 @@ class Runner(Logger):
         self.logger.info('Set order book parser')
 
         self.order_book_update_parser = parser
+
+    def set_until_ts(self, until_ts: Timestamp):
+        self.until_ts = until_ts
 
     def __iter__(self):
         return self
@@ -40,6 +44,12 @@ class Runner(Logger):
 
         assert next_trade is None or self.last_ts <= next_trade.ts
         assert next_ob_update is None or self.last_ts <= next_ob_update.ts
+
+        if self.until_ts is not None:
+            if self.until_ts < min(next_trade.ts, next_ob_update.ts):
+                self.logger.info("Ended by until ts")
+
+                raise StopIteration
 
         if next_trade is not None and next_ob_update is not None:
             if next_trade.ts < next_ob_update.ts:

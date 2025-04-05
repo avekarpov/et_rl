@@ -26,8 +26,8 @@ class Tester(Logger):
         self.runner.trade_parser.set_files(list_dir_regex(dir_path, re.compile(r'.*trades')))
         self.runner.order_book_update_parser.set_files(list_dir_regex(dir_path, re.compile(r'.*order_book_updates')))
 
-    def set_consumer(self, consumer):
-        self.runner.router.set_consumer(consumer)
+    def add_consumer(self, consumer):
+        self.runner.router.add_consumer(consumer)
 
     def run(self, after_step=None):
         self.logger.info("Start runner")
