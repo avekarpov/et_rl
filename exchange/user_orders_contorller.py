@@ -1,19 +1,26 @@
-from primitives import *
-from events import *
+from exchange.primitives import *
+from exchange.events import *
+from exchange.logging import Logger
 
 
-class UserOrdersController:
+class UserOrdersController(Logger):
     def __init__(self, router):
+        super().__init__()
+
         self.router = router
         self.router.set_user_orders_contorller(self)
 
         self.summary_market_order = MarketOrder()
 
     def on_user_place_market_order(self, event: PlaceUserMarketOrderEvent):
+        self.log_event(event)
+
         self._add_market_order(event.order)
         self.router.on_user_market_order_placed(UserMarketOrderPlacedEvent(event.ts))
 
     def on_user_fill(self, event: UserFillEvent):
+        self.log_event(event)
+
         assert event.user_fill.side == self.summary_market_order.side
         assert event.user_fill.quantity <= self.summary_market_order.quantity
 

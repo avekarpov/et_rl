@@ -1,29 +1,37 @@
-from order_book import OrderBook as Ob
-from matching_engine import MatchingEngine as Me
-from user_orders_contorller import UserOrdersController as Oc
-from parsers import OrderBookUpdateParser as ObUpdateParer, TradeParser
-from runner import Runner
-from tools import list_dir_regex
+from exchange.order_book import OrderBook as Ob
+from exchange.matching_engine import MatchingEngine as Me
+from exchange.user_orders_contorller import UserOrdersController as Uoc
+from exchange.parsers import OrderBookUpdateParser as ObUpdateParer, TradeParser
+from exchange.runner import Runner
+from exchange.tools import list_dir_regex
+from exchange.logging import Logger
+import re
 
 
-class Tester:
+class Tester(Logger):
     def __init__(self):
+        super().__init__()
+
         self.runner = Runner()
         self.runner.set_order_book_update_parser(ObUpdateParer())
         self.runner.set_trade_parser(TradeParser())
 
-        self.oc = Oc(self.runner.router)
-        self.ob = Ob(self.runner.router, self.oc)
-        self.me = Me(self.runner.router, self.oc)
+        self.uoc = Uoc(self.runner.router)
+        self.ob = Ob(self.runner.router, self.uoc)
+        self.me = Me(self.runner.router, self.uoc)
 
     def set_dir(self, dir_path):
-        #file name format TS_SYMBOL_TYPE
-        self.runner.trade_parser.set_files(list_dir_regex(dir_path, r'.*trades'))
-        self.runner.order_book_update_parser.set_files(list_dir_regex(dir_path, r'.*order_book_updates'))
+        self.logger.info(f'Use dir: {dir_path}')
+
+        self.runner.trade_parser.set_files(list_dir_regex(dir_path, re.compile(r'.*trades')))
+        self.runner.order_book_update_parser.set_files(list_dir_regex(dir_path, re.compile(r'.*order_book_updates')))
 
     def set_consumer(self, consumer):
         self.runner.router.set_consumer(consumer)
 
-    def run(self):
-        while self.runner:
-            pass
+    def run(self, after_step=None):
+        self.logger.info("Start runner")
+
+        for _ in self.runner:
+            if after_step is not None:
+                after_step()

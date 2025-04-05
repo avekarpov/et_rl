@@ -1,8 +1,16 @@
-from primitives import *
+from exchange.primitives import *
 
 class EventBase:
+    id = 0
+
     def __init__(self, ts: Timestamp):
         self.ts = ts
+
+        EventBase.id += 1
+        self.id = EventBase.id
+
+    def __str__(self):
+        return f'{{"name":"{type(self).__name__}","id":{self.id},"ts":"{self.ts.strftime("%Y-%m-%d %H:%M:%S")}"}}'
 
 
 class HistoricalTradeEvent(EventBase):
@@ -51,3 +59,11 @@ class PlaceUserMarketOrderEvent(EventBase):
 
 class UserMarketOrderPlacedEvent(EventBase):
     pass
+
+
+class BbaEvent(EventBase):
+    def __init__(self, bba: Bba, ts):
+        super().__init__(ts)
+        self.bba = bba
+
+    # TODO: implement __str__

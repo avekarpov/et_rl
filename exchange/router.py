@@ -1,11 +1,13 @@
-from events import *
-from order_book import OrderBook
-from matching_engine import MatchingEngine
-from user_orders_contorller import UserOrdersController
+from exchange.events import *
+from exchange.order_book import OrderBook
+from exchange.matching_engine import MatchingEngine
+from exchange.user_orders_contorller import UserOrdersController
+from exchange.logging import Logger
 
 
-class Router:
+class Router(Logger):
     def __init__(self):
+        super().__init__()
         self.user_orders_contorller: UserOrdersController = None
         self.matching_engine: MatchingEngine = None
         self.order_book: OrderBook = None
@@ -56,25 +58,32 @@ class Router:
         return self.consumer
 
     def on_historical_trade(self, event: HistoricalTradeEvent):
+        self.log_event(event)
         self.get_matching_engine().on_historical_trade(event)
 
     def on_historical_order_book_update(self, event: HistoricalOrderBookUpdate):
+        self.log_event(event)
         self.get_order_book().on_historical_order_book_update(event)
     
     def on_place_user_market_order(self, event: PlaceUserMarketOrderEvent):
+        self.log_event(event)
         self.get_user_orders_contorller().on_user_place_market_order(event)
     
     def on_user_market_order_placed(self, event: UserMarketOrderPlacedEvent):
+        self.log_event(event)
         self.get_consumer().on_user_market_order_placed(event)
 
     def on_user_fill(self, event: UserFillEvent):
+        self.log_event(event)
         self.get_user_orders_contorller().on_user_fill(event)
         self.get_consumer().on_user_fill(event)
     
     def on_order_book_update(self, event: OrderBookUpdateEvent):
+        self.log_event(event)
         self.get_consumer().on_order_book_update(event)
 
     def on_trade(self, event: TradeEvent):
+        self.log_event(event)
         self.get_consumer().on_trade(event)
 
 

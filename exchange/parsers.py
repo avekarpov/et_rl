@@ -1,16 +1,14 @@
-from primitives import *
-from events import HistoricalOrderBookUpdate, HistoricalTradeEvent
+from exchange.primitives import *
+from exchange.events import HistoricalOrderBookUpdate, HistoricalTradeEvent
+from exchange.logging import Logger
 from typing import List
 import json
+from copy import deepcopy as copy # TODO: remove
 
 
-class ParserBase:
+class ParserBase(Logger):
     class FilesStream:
-        def __init__(self):
-            self.file_paths = iter([])
-            self.current_file = None
-
-        def set_files(self, file_paths: List[str]):
+        def __init__(self, file_paths: List[str]):
             self.file_paths = iter(sorted(file_paths))
             self.current_file = None
 
@@ -30,12 +28,21 @@ class ParserBase:
                 line = next(self.current_file, None)
 
                 if line is None:
+                    self.current_file = None
+
                     continue
 
                 return line
 
 
-    def __init__(self, file_paths: List[str]):
+    def __init__(self):
+        super().__init__()
+
+        self.stream = None
+
+    def set_files(self, file_paths: List[str]):
+        self.logger.info(f'Use files: [{",".join(file_paths)}]')
+
         self.stream = ParserBase.FilesStream(file_paths)
     
     def __iter__(self):
@@ -82,7 +89,9 @@ class OrderBookUpdateParser(ParserBase):
 
     def __init__(self):
         super().__init__()
-        self.event = HistoricalOrderBookUpdate(OrderBookSnaphot(), None)
+
+        self.snapshot = OrderBookSnaphot()
+        self.ts = None
 
     def __next__(self):
         while True:
@@ -90,15 +99,19 @@ class OrderBookUpdateParser(ParserBase):
 
             if line is None:
                 raise StopIteration
-            
+
+            prev = self.snapshot
+
             if not self._parse_and_apply_line(line):
                 continue
 
-            return self.event
+            assert self.snapshot.is_correct()
+
+            return HistoricalOrderBookUpdate(self.snapshot, self.ts)
 
     def _parse_and_apply_line(self, line) -> bool:
-        OrderBookUpdateParser._parse_line(self.event, line)
-        return len(self.event.snapshot.bids) != 0 and len(self.event.snapshot.asks) != 0
+        OrderBookUpdateParser._parse_line(self, line)
+        return len(self.snapshot.bids) != 0 and len(self.snapshot.asks) != 0
 
     @staticmethod 
     def _parse_line(event, line):
@@ -152,6 +165,24 @@ class OrderBookUpdateParser(ParserBase):
                 if not try_insert():
                     snapshot_side.append(OrderBookLevel(side, price, quantity))
 
+        elif update_type == 'TrimHead':
+            level = commands[3]
+            price = Price(level[0])
+            quantity = Quantity(level[1])
+
+            while side.is_deeper(snapshot_side[0].price, price):
+                snapshot_side.pop(0)
+            
+            if snapshot_side[0].price == price:
+                if not quantity.is_zero():
+                    snapshot_side[0].quantity = quantity
+                else:
+                    snapshot_side.pop(0)
+            elif not quantity.is_zero():
+                snapshot_side.insert(0, OrderBookLevel(side, price, quantity))
+
+        else:
+            assert False
 
 class TradeParser(ParserBase):
     '''
@@ -169,6 +200,7 @@ class TradeParser(ParserBase):
 
     def __init__(self):
         super().__init__()
+
         self.next_events: List[HistoricalTradeEvent] = []
 
     def __next__(self):

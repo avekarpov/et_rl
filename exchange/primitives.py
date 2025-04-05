@@ -20,6 +20,12 @@ class Side(Enum):
             return self.Sell
         else:
             return self.Buy
+        
+    def is_deeper(self, lhs, rhs):
+        if self.value == self.Buy.value:
+            return lhs > rhs
+        else:
+            return lhs < rhs
 
 
 # TODO: make as class Price(Decimal)
@@ -46,6 +52,10 @@ class MarketOrder:
 
     def __repr__(self):
         return str(self)
+
+    def __eq__(self, other: LimitOrder):
+        assert self.side == other.side
+        return self.quantity == other.quantity
 
 
 class LimitOrder(MarketOrder):
@@ -81,16 +91,28 @@ class OrderBookSide(List[OrderBookLevel]):
         return str(self)
 
     def append(self, level: OrderBookLevel):
+        assert level.quantity != Quantity('0')
         assert self.side == level.side
         super().append(level)
 
     def insert(self, index, level: OrderBookLevel):
+        assert level.quantity != Quantity('0')
         assert self.side == level.side
-        return super().insert(index, level)
+        super().insert(index, level)
 
     def __eq__(self, other: OrderBookSide):
         assert self.side == other.side
         return super().__eq__(other)
+
+    def is_correct(self):
+        for i in range(len(self) - 1):
+            if self[i].quantity == Quantity('0'):
+                return False
+
+            if not self.side.is_deeper(self[i].price, self[i + 1].price):
+                return False
+        
+        return self[-1].quantity != Quantity('0')
 
 
 class OrderBookSnaphot:
@@ -113,6 +135,13 @@ class OrderBookSnaphot:
     def __eq__(self, other: OrderBookSnaphot):
         return self.bids == other.bids and self.asks == other.asks
 
+    def is_correct(self):
+        if len(self.bids) != 0 and len(self.asks) !=0:
+            if (self.bids[0].price >= self.asks[0].price):
+                return False
+
+        return self.bids.is_correct() and self.asks.is_correct()
+
 
 class Trade(LimitOrder):
     pass
@@ -120,6 +149,23 @@ class Trade(LimitOrder):
 
 class UserFill(LimitOrder):
     pass
+
+
+# TODO: add tests
+class Bba:
+    def __init__(self, bid: OrderBookLevel, ask: OrderBookLevel):
+        assert bid.side == Side.Buy
+        assert ask.side == Side.Sell
+        assert bid.price < ask.price
+
+        self.bid = bid
+        self.ask = ask
+
+    def __str__(self):
+        return f'{{"bid":{self.bid},"ask":{self.ask}}}'
+
+    def __repr__(self):
+        return str(self)
 
 
 # Tests ################################################################################################################
@@ -202,5 +248,6 @@ __all__ = [
     'OrderBookSide',
     'OrderBookSnaphot',
     'Trade',
-    'UserFill'
+    'UserFill',
+    'Bba'
 ]
