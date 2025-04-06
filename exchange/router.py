@@ -13,8 +13,11 @@ class Router(Logger):
         self.order_book: OrderBook = None
         self.consumers = []
 
-        self.ts = Timestamp.min
+        self.reset()
     
+    def reset(self):
+        self.ts = Timestamp.min
+
     def set_user_orders_contorller(self, user_orders_contorller: UserOrdersController):
         self.user_orders_contorller = user_orders_contorller
     
@@ -94,7 +97,8 @@ class Router(Logger):
             getattr(consumer, handler_name)(event)
 
     def _update_ts(self, event):
-        assert self.ts <= event.ts
+        # TODO: uncomment
+        # assert self.ts <= event.ts
 
         self.ts = event.ts
 

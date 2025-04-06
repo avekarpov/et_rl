@@ -43,21 +43,23 @@ class Adaptor(Logger):
             return self.balance + self.position * self.price
 
 
-    def __init__(self, router, window_size=timedelta(minutes=5)):
+    def __init__(self, router):
         super().__init__()
 
         self.router = router
         self.router.add_consumer(self)
 
-        self.window_size = window_size
+        self.window_size = timedelta(minutes=5)
+
+        self.reset()
+
+    def reset(self):
         self.wallet_states: List[Adaptor.WalletState] = []
         
-        self.last_snapshot = None
+        self.order_book = None
 
-        self.strategy = None
-
-    def set_strategy(self, strategy):
-        self.strategy = strategy
+    def set_window_size(self, window_size):
+        self.window_size = window_size
 
     def on_user_market_order_placed(self, event):
         pass
@@ -73,14 +75,10 @@ class Adaptor(Logger):
             self.wallet_states.append(self.wallet_states[-1].with_fill(event))
             self._clear()
 
-        self._push_state()
-
     def on_order_book_update(self, event: OrderBookUpdateEvent):
         self._log_event(event)
 
-        self.last_snapshot = event.snapshot
-
-        self._push_state()
+        self.order_book = event.snapshot
 
     def on_trade(self, event: TradeEvent):
         self._log_event(event)
@@ -88,11 +86,15 @@ class Adaptor(Logger):
         if len(self.wallet_states) != 0:
             self.wallet_states.append(self.wallet_states[-1].with_trade(event))
             self._clear()
-        
-        self._push_state()
 
     def place_market_order(self, order: MarketOrder):
         self.router.on_place_user_market_order(PlaceUserMarketOrderEvent(order, self.router.ts))
+
+    @property
+    def wallet_state(self):
+        if len(self.wallet_states) != 0:
+            return self.wallet_states[-1]
+        return None
 
     def _clear(self):
         if self.window_size != timedelta():
@@ -105,12 +107,6 @@ class Adaptor(Logger):
                 for state in self.wallet_states:
                     state.balance -= last_state.balance
                     state.position -= last_state.position
-
-    def _push_state(self):
-        if self.strategy is not None:
-            # TODO: implement
-            self.strategy.on_state(None)
-
 
     def init_axs(self):
         _, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 6))

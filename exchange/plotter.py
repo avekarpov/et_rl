@@ -9,23 +9,34 @@ from copy import deepcopy as copy
 
 # TODO: Use matplotlib.animation
 class Plotter(Logger):
-    def __init__(self, router, window_size = timedelta(hours=1), refresh_rate=500):
+    def __init__(self, router):
         super().__init__()
 
         self.router = router
         self.router.add_consumer(self)
 
-        self.window_size = window_size
+        self.window_size = timedelta(hours=1)
 
-        self.refresh_rate = refresh_rate
-        self.events_before_refresh = 0
+        # TODO: change to time interval
+        self.refresh_rate = 500
 
         plt.ion()
         self.init_axs()
 
+        self.reset()
+
+    def reset(self):
         self.bbas: List[BbaEvent] = []
         self.trades: List[TradeEvent] = []
         self.user_fills: List[UserFillEvent] =[]
+
+        self.events_before_refresh = 0
+
+    def set_window_size(self, window_size):
+        self.window_size = window_size
+
+    def set_refresh_rate(self, refresh_rate):
+        self.refresh_rate = refresh_rate
 
     def init_axs(self):
         _, self.ax = plt.subplots()
@@ -112,8 +123,8 @@ class Plotter(Logger):
 
 
 class ExtendedPlotter(Plotter):
-    def __init__(self, router, window_size=timedelta(hours=1), refresh_rate=500):
-        super().__init__(router, window_size, refresh_rate)
+    def __init__(self, router):
+        super().__init__(router)
     
         self.builders = []
 

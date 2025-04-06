@@ -20,6 +20,16 @@ class Tester(Logger):
         self.ob = Ob(self.runner.router, self.uoc)
         self.me = Me(self.runner.router, self.uoc)
 
+        self.reset()
+
+    def reset(self):
+        self.runner.reset()
+        self.runner.trade_parser.reset()
+        self.runner.order_book_update_parser.reset()
+        self.uoc.reset()
+        self.ob.reset()
+        self.me.reset()
+
     def set_dir(self, dir_path):
         self.logger.info(f'Use dir: {dir_path}')
 
@@ -36,3 +46,6 @@ class Tester(Logger):
         for _ in self.runner:
             if after_step is not None:
                 after_step()
+
+    def step(self):
+        next(self.runner)

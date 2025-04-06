@@ -10,6 +10,9 @@ class UserOrdersController(Logger):
         self.router = router
         self.router.set_user_orders_contorller(self)
 
+        self.reset()
+
+    def reset(self):
         self.summary_market_order = MarketOrder()
 
     def on_user_place_market_order(self, event: PlaceUserMarketOrderEvent):

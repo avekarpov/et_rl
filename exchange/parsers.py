@@ -37,12 +37,17 @@ class ParserBase(Logger):
     def __init__(self):
         super().__init__()
 
-        self.stream = None
+        self.file_paths = []
+
+        self.reset()
+
+    def reset(self):
+        self.stream = ParserBase.FilesStream(self.file_paths)
 
     def set_files(self, file_paths: List[str]):
-        self.logger.info(f'Use files: [{",".join(file_paths)}]')
+        self.file_paths = file_paths
 
-        self.stream = ParserBase.FilesStream(file_paths)
+        self.stream = ParserBase.FilesStream(self.file_paths)
     
     def __iter__(self):
         return self
@@ -88,6 +93,9 @@ class OrderBookUpdateParser(ParserBase):
 
     def __init__(self):
         super().__init__()
+
+    def reset(self):
+        super().reset()
 
         self.snapshot = OrderBookSnaphot()
         self.ts = None
@@ -199,6 +207,9 @@ class TradeParser(ParserBase):
 
     def __init__(self):
         super().__init__()
+
+    def reset(self):
+        super().reset()
 
         self.next_events: List[HistoricalTradeEvent] = []
 

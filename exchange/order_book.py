@@ -13,6 +13,11 @@ class OrderBook(Logger):
 
         self.user_orders_contorller = user_orders_contorller
 
+        self.reset()
+
+    def reset(self):
+        pass
+
     def on_historical_order_book_update(self, event: HistoricalOrderBookUpdate):
         self._log_event(event)
         self.router.on_order_book_update(OrderBookUpdateEvent(event.snapshot, event.ts))

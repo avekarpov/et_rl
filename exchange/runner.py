@@ -11,12 +11,22 @@ class Runner(Logger):
         self.router = Router()
         self.trade_parser = None
         self.order_book_update_parser = None
+        
+        self.until_ts = None
 
+        self.reset()
+
+    def reset(self):
         self.next_historical_trade = None
         self.next_historical_order_book_update = None
-        
+
         self.last_ts = Timestamp.min
-        self.until_ts = None
+
+    def init_order_book(self):
+        while self._get_next_historical_trade().ts < self._get_next_historical_order_book_update().ts:
+            next(self)
+
+        next(self)
 
     def set_trade_parser(self, parser):
         self.logger.info('Set trade parser')
