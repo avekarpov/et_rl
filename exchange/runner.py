@@ -3,6 +3,7 @@ from exchange.events import HistoricalTradeEvent, HistoricalOrderBookUpdate
 from exchange.logging import Logger
 from exchange.primitives import Timestamp
 
+
 class Runner(Logger):
     def __init__(self):
         super().__init__()
@@ -34,7 +35,7 @@ class Runner(Logger):
         return self
 
     def __next__(self):
-        self.logger.debug("Step")
+        self.logger.debug('Step')
 
         next_trade = self._get_next_historical_trade()
         next_ob_update = self._get_next_historical_order_book_update()
@@ -58,7 +59,7 @@ class Runner(Logger):
                 )
 
                 self.router.on_historical_trade(next_trade)
-                self.last_ts = next_trade.ts
+                self._update_last_ts(next_trade.ts)
 
                 self._use_historical_trade()
 
@@ -68,7 +69,7 @@ class Runner(Logger):
                 )
 
                 self.router.on_historical_order_book_update(next_ob_update)
-                self.last_ts = next_ob_update.ts
+                self._update_last_ts(next_ob_update.ts)
 
                 self._use_next_historical_order_book_update()
         
@@ -76,7 +77,7 @@ class Runner(Logger):
             self.logger.debug("Has only trade event")
 
             self.router.on_historical_trade(next_trade)
-            self.last_ts = next_trade.ts
+            self._update_last_ts(next_trade.ts)
 
             self._use_historical_trade()
         
@@ -84,7 +85,7 @@ class Runner(Logger):
             self.logger.debug("Has only order book update event")
 
             self.router.on_historical_order_book_update(next_ob_update)
-            self.last_ts = next_ob_update.ts
+            self._update_last_ts(next_ob_update.ts)
 
             self._use_next_historical_order_book_update()
 
@@ -116,6 +117,14 @@ class Runner(Logger):
 
     def _use_next_historical_order_book_update(self):
         self.next_historical_order_book_update = None
+
+    def _update_last_ts(self, ts):
+        assert self.last_ts <= ts
+
+        if self.last_ts == Timestamp.min or int(self.last_ts.timestamp() / 60) < int(ts.timestamp() / 60):
+            self.logger.info(f'Ts: {ts}')
+        
+        self.last_ts = ts
 
 
 # TODO: add tests

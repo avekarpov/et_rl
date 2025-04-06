@@ -10,7 +10,7 @@ class EventBase:
         self.id = EventBase.id
 
     def __str__(self):
-        return f'{{"name":"{type(self).__name__}","id":{self.id},"ts":"{self.ts.strftime("%Y-%m-%d %H:%M:%S")}"}}'
+        return f'{{"name":"{type(self).__name__}","id":{self.id},"ts":"{self.ts}}}'
 
 
 class HistoricalTradeEvent(EventBase):

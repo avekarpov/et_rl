@@ -66,9 +66,9 @@ class Plotter(Logger):
 
         self._clear(self.trades)
 
-    def _clear(self, events):
+    def _clear(self, events, mult=1):
         if self.window_size != 0:
-            while events[0].ts + self.window_size < events[-1].ts:
+            while events[0].ts + self.window_size * mult < events[-1].ts:
                 events.pop(0)
 
     def build(self):
@@ -182,7 +182,7 @@ class PlotterWithPnl(Plotter):
         else:
             self.pnl_states.append(self.pnl_states[-1].with_fill(event))
         
-        self._clear(self.pnl_states)
+        self._clear(self.pnl_states, mult=10)
 
     def build(self):
         super().build()
