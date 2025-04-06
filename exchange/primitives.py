@@ -44,9 +44,12 @@ Price = Decimal
 Quantity = Decimal
 
 
-# TODO: make as class Quantity(Decimal)
-Timestamp = datetime
+class Timestamp(datetime):
+    DEFAULT_FORMAT = "%Y-%m-%d %H:%M:%S"
 
+    @staticmethod
+    def from_str(str, format=DEFAULT_FORMAT) -> Timestamp:
+        return Timestamp.strptime(str, format)
 
 class MarketOrder:
     def __init__(self, side: Side = Side.Buy, quantity: Quantity = Quantity('0')):

@@ -6,7 +6,7 @@ class Logger:
     def __init__(self):
         self.logger = logging.getLogger(type(self).__name__)
 
-    def log_event(self, event, level = DEBUG):
+    def _log_event(self, event, level = DEBUG):
         self.logger.debug(f'Receive event: {event}')
 
 

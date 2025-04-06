@@ -13,13 +13,13 @@ class UserOrdersController(Logger):
         self.summary_market_order = MarketOrder()
 
     def on_user_place_market_order(self, event: PlaceUserMarketOrderEvent):
-        self.log_event(event)
+        self._log_event(event)
 
         self._add_market_order_quantity(event.order.side, event.order.quantity)
         self.router.on_user_market_order_placed(UserMarketOrderPlacedEvent(event.ts))
 
     def on_user_fill(self, event: UserFillEvent):
-        self.log_event(event)
+        self._log_event(event)
 
         assert event.user_fill.side == self.summary_market_order.side
         assert event.user_fill.quantity <= self.summary_market_order.quantity

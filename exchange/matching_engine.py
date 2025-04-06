@@ -14,7 +14,7 @@ class MatchingEngine(Logger):
         self.user_orders_contorller = user_orders_contorller
 
     def on_historical_trade(self, event: HistoricalTradeEvent):
-        self.log_event(event)
+        self._log_event(event)
         if not self._user_market_order_quantity().is_zero() and event.trade.side == self._user_market_order_side():
             fill_quantity = min(event.trade.quantity, self._user_market_order_quantity())
 

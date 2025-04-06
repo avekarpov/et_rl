@@ -12,6 +12,8 @@ class Router(Logger):
         self.matching_engine: MatchingEngine = None
         self.order_book: OrderBook = None
         self.consumers = []
+
+        self.ts = Timestamp.min
     
     def set_user_orders_contorller(self, user_orders_contorller: UserOrdersController):
         self.user_orders_contorller = user_orders_contorller
@@ -52,37 +54,49 @@ class Router(Logger):
         return self.order_book
 
     def on_historical_trade(self, event: HistoricalTradeEvent):
-        self.log_event(event)
+        self._log_event(event)
+        self._update_ts(event)
         self.get_matching_engine().on_historical_trade(event)
 
     def on_historical_order_book_update(self, event: HistoricalOrderBookUpdate):
-        self.log_event(event)
+        self._log_event(event)
+        self._update_ts(event)
         self.get_order_book().on_historical_order_book_update(event)
     
     def on_place_user_market_order(self, event: PlaceUserMarketOrderEvent):
-        self.log_event(event)
+        self._log_event(event)
+        self._update_ts(event)
         self.get_user_orders_contorller().on_user_place_market_order(event)
     
     def on_user_market_order_placed(self, event: UserMarketOrderPlacedEvent):
-        self.log_event(event)
+        self._log_event(event)
+        self._update_ts(event)
         self._for_all_consumers(event, 'on_user_market_order_placed')
 
     def on_user_fill(self, event: UserFillEvent):
-        self.log_event(event)
+        self._log_event(event)
+        self._update_ts(event)
         self.get_user_orders_contorller().on_user_fill(event)
         self._for_all_consumers(event, 'on_user_fill')
     
     def on_order_book_update(self, event: OrderBookUpdateEvent):
-        self.log_event(event)
+        self._log_event(event)
+        self._update_ts(event)
         self._for_all_consumers(event, 'on_order_book_update')
 
     def on_trade(self, event: TradeEvent):
-        self.log_event(event)
+        self._log_event(event)
+        self._update_ts(event)
         self._for_all_consumers(event, 'on_trade')
 
     def _for_all_consumers(self, event, handler_name):
         for consumer in self.consumers:
             getattr(consumer, handler_name)(event)
+
+    def _update_ts(self, event):
+        assert self.ts <= event.ts
+
+        self.ts = event.ts
 
 
 # TODO: add tests
