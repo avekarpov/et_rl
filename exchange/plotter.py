@@ -9,6 +9,8 @@ from typing import List
 # TODO: Use matplotlib.animation
 class Plotter(Logger):
     def __init__(self, router):
+        plt.ion()
+
         super().__init__()
 
         self.router = router
@@ -18,9 +20,7 @@ class Plotter(Logger):
 
         # TODO: change to time interval
         self.refresh_rate = 500
-
-        plt.ion()
-        self.init_axs()
+        self.inited = False
 
         self.reset()
 
@@ -37,11 +37,18 @@ class Plotter(Logger):
     def set_refresh_rate(self, refresh_rate):
         self.refresh_rate = refresh_rate
 
+    def disable(self):
+        self.set_refresh_rate(0)
+
     def init_axs(self):
+        assert not self.inited
+
         _, self.ax = plt.subplots()
         self.ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
         self.ax.set_xlabel('Time')
         self.ax.set_ylabel('Price')
+
+        self.inited = True
 
     def on_user_market_order_placed(self, event):
         pass
@@ -113,6 +120,12 @@ class Plotter(Logger):
         )
 
     def draw(self):
+        if self.refresh_rate == 0:
+            return
+
+        if not self.inited: 
+            self.init_axs()
+
         if self.events_before_refresh != 0:
             self.events_before_refresh -= 1
             return
@@ -135,9 +148,16 @@ class ExtendedPlotter(Plotter):
     
         self.builders = []
 
+    def init_axs(self):
+        super().init_axs()
+
+        for builder in self.builders:
+            builder.init_axs()
+
     def add_builder(self, builder):
+        assert not self.inited
+
         self.builders.append(builder)
-        builder.init_axs()
 
     def build(self):
         super().build()
