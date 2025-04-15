@@ -11,8 +11,11 @@ import matplotlib.dates as mdates
 
 class Adaptor(Logger):
     class WalletState:
+        fee_percent = Quantity('0')
+        open_risk_penalty_percent = Quantity('0')
+
         def __init__(self, side: Side, price: Price, quantity: Quantity, ts: Timestamp):
-            self.balance = -side.sidded(quantity * price)
+            (self.balance, self.fee) = Adaptor.WalletState.balance_and_fee(side, price, quantity)
             self.position = side.sidded(quantity)
             
             self.side = side
@@ -24,7 +27,11 @@ class Adaptor(Logger):
             fill = event.user_fill
 
             state = copy(self)
-            state.balance -= fill.side.sidded(fill.quantity * fill.price)
+            
+            (balance, fee) = Adaptor.WalletState.balance_and_fee(fill.side, fill.price, fill.quantity)
+
+            state.balance += balance
+            state.fee += fee
             state.position += fill.side.sidded(fill.quantity)
             state.price = fill.price
             state.ts = event.ts
@@ -40,7 +47,21 @@ class Adaptor(Logger):
 
         @property
         def pnl(self):
-            return self.balance + self.position * self.price
+            return \
+                self.balance \
+                + self.position * self.price \
+                - self.fee \
+                - abs(self.position) * self.open_risk_penalty_percent
+
+        @property
+        def finalized_balance(self):
+            return self.balance - self.fee
+
+        @staticmethod
+        def balance_and_fee(side: Side, price: Price, quantity: Quantity):
+            quote = quantity * price
+            fee = quote * Adaptor.WalletState.fee_percent
+            return (-side.sidded(quote), fee)
 
 
     def __init__(self, router):
@@ -60,6 +81,12 @@ class Adaptor(Logger):
 
     def set_window_size(self, window_size):
         self.window_size = window_size
+
+    def set_fee_percent(self, percent):
+        Adaptor.WalletState.fee_percent = percent
+
+    def set_open_risk_penalty_percent(self, percent):
+        Adaptor.WalletState.open_risk_penalty_percent = percent
 
     def on_user_market_order_placed(self, event):
         pass
@@ -106,6 +133,7 @@ class Adaptor(Logger):
 
                 for state in self.wallet_states:
                     state.balance -= last_state.balance
+                    state.fee -= last_state.fee
                     state.position -= last_state.position
 
     def init_axs(self):
@@ -115,6 +143,7 @@ class Adaptor(Logger):
         self.ax_pnl.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
         self.ax_pnl.set_xlabel('Time')
         self.ax_pnl.set_ylabel('Price')
+        self.ax_fee = self.ax_pnl.twinx()
 
         self.ax_postion = ax2
         self.ax_postion.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
@@ -129,6 +158,13 @@ class Adaptor(Logger):
             [state.ts for state in self.wallet_states],
             [state.pnl for state in self.wallet_states],
             linestyle='-', color='purple'
+        )
+        ax_fee = self.ax_fee
+        ax_fee.clear()
+        ax_fee.plot(
+            [state.ts for state in self.wallet_states],
+            [state.fee for state in self.wallet_states],
+            linestyle='-', color='black'
         )
 
         ax_postion = self.ax_postion
@@ -156,48 +192,54 @@ class TestAdaptor:
             def add_consumer(self, consumer):
                 pass
 
-        adaptor = Adaptor(RouterMock(), window_size=timedelta(minutes=1))
+        adaptor = Adaptor(RouterMock())
+        adaptor.set_window_size(timedelta(minutes=1))
+        adaptor.set_fee_percent(Quantity('0.05'))
 
         fill_1 = UserFillEvent(
-            UserFill(Side.Buy, Price("100"), Quantity("10")),
-            Timestamp.from_str("2025-03-21 12:30:00")
+            UserFill(Side.Buy, Price('100'), Quantity('10')),
+            Timestamp.from_str('2025-03-21 12:30:00')
         )
         adaptor.on_user_fill(fill_1)
 
         state = adaptor.wallet_states[0]
-        assert state.balance == -Quantity("1000")
-        assert state.position == Quantity("10")
-        assert state.pnl == Quantity("0")
+        assert state.balance == Quantity('-1000')
+        assert state.fee == Quantity('50')
+        assert state.position == Quantity('10')
+        assert state.pnl == Quantity('-50')
 
         fill_2 = UserFillEvent(
-            UserFill(Side.Sell, Price("110"), Quantity("20")),
-            Timestamp.from_str("2025-03-21 12:30:30")
+            UserFill(Side.Sell, Price('110'), Quantity('20')),
+            Timestamp.from_str('2025-03-21 12:30:30')
         )
         adaptor.on_user_fill(fill_2)
 
         state = adaptor.wallet_states[1]
-        assert state.balance == Quantity("1200")
-        assert state.position == -Quantity("10")
-        assert state.pnl == Quantity("100")
+        assert state.balance == Quantity('1200')
+        assert state.position == -Quantity('10')
+        assert state.fee == Quantity('160')
+        assert state.pnl == Quantity('-60')
 
         fill_3 = UserFillEvent(
-            UserFill(Side.Buy, Price("100"), Quantity("10")),
-            Timestamp.from_str("2025-03-21 12:31:00")
+            UserFill(Side.Buy, Price('100'), Quantity('10')),
+            Timestamp.from_str('2025-03-21 12:31:00')
         )
         adaptor.on_user_fill(fill_3)
 
         state = adaptor.wallet_states[0]
-        assert state.balance == Quantity("2200")
-        assert state.position == -Quantity("20")
-        assert state.pnl == Quantity("0")
+        assert state.balance == Quantity('2200')
+        assert state.position == Quantity('-20')
+        assert state.fee == Quantity('110')
+        assert state.pnl == Quantity('-110')
         state = adaptor.wallet_states[1]
-        assert state.balance == Quantity("1200")
-        assert state.position == -Quantity("10")
-        assert state.pnl == Quantity("200")
+        assert state.balance == Quantity('1200')
+        assert state.position == Quantity('-10')
+        assert state.fee == Quantity("160")
+        assert state.pnl == Quantity('40')
 
 if __name__ == '__main__':
     import pytest
-    pytest.main(["-v", __file__])
+    pytest.main(['-v', __file__])
 
 
 # Hide tests from import ###############################################################################################
