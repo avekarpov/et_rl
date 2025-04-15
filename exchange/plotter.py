@@ -4,7 +4,6 @@ from exchange.events import *
 from exchange.logging import Logger
 from datetime import timedelta
 from typing import List
-from copy import deepcopy as copy
 
 
 # TODO: Use matplotlib.animation
@@ -99,10 +98,18 @@ class Plotter(Logger):
             [event.trade.price for event in self.trades],
             marker = 'o', color='black', alpha=0.7
         )
+
+        bids = list(filter(lambda x: x.user_fill.side == Side.Buy, self.user_fills))
+        asks = list(filter(lambda x: x.user_fill.side == Side.Sell, self.user_fills))
         ax.scatter(
-            [event.ts for event in self.user_fills],
-            [event.user_fill.price for event in self.user_fills],
+            [event.ts for event in bids],
+            [event.user_fill.price for event in bids],
             marker = 'o', color='blue'
+        )
+        ax.scatter(
+            [event.ts for event in asks],
+            [event.user_fill.price for event in asks],
+            marker = 'o', color='yellow'
         )
 
     def draw(self):
