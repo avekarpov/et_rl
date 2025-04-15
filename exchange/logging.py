@@ -9,6 +9,9 @@ class Logger:
     def _log_event(self, event, level = DEBUG):
         self.logger.debug(f'Receive event: {event}')
 
+    def disable_logging(self):
+        self.logger.disabled = True
+
 
 def default_config(level = INFO):
     logging.basicConfig(
