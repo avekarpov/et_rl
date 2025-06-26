@@ -10,7 +10,7 @@ import matplotlib.dates as mdates
 
 
 class Adaptor(Logger):
-    class WalletState:
+    class WalletState: # TODO: rename to StatSlot
         fee_percent = Quantity('0')
         open_risk_penalty_percent = Quantity('0')
 
@@ -114,6 +114,7 @@ class Adaptor(Logger):
             self.wallet_states.append(self.wallet_states[-1].with_trade(event))
             self._clear()
 
+    # TODO: move to Tester
     def place_market_order(self, order: MarketOrder):
         self.router.on_place_user_market_order(PlaceUserMarketOrderEvent(order, self.router.ts))
 

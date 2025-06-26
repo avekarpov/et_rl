@@ -48,4 +48,10 @@ class Tester(Logger):
                 after_step()
 
     def step(self):
-        next(self.runner)
+        try:
+            next(self.runner)
+        except StopIteration:
+            return False
+        
+        return True
+

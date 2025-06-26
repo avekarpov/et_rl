@@ -13,6 +13,7 @@ class Runner(Logger):
         self.order_book_update_parser = None
         
         self.until_ts = None
+        self.until_ob_update = True # TODO: add setter
 
         self.reset()
 
@@ -45,64 +46,77 @@ class Runner(Logger):
         return self
 
     def __next__(self):
-        self.logger.debug('Step')
+        while True:
+            self.logger.debug('Step')
 
-        next_trade = self._get_next_historical_trade()
-        next_ob_update = self._get_next_historical_order_book_update()
+            next_trade = self._get_next_historical_trade()
+            next_ob_update = self._get_next_historical_order_book_update()
 
-        self.logger.debug(f'Next trade event: {next_trade}')
-        self.logger.debug(f'Next order book update event: {next_ob_update}')
+            self.logger.debug(f'Next trade event: {next_trade}')
+            self.logger.debug(f'Next order book update event: {next_ob_update}')
 
-        assert next_trade is None or self.last_ts <= next_trade.ts
-        assert next_ob_update is None or self.last_ts <= next_ob_update.ts
+            assert next_trade is None or self.last_ts <= next_trade.ts
+            assert next_ob_update is None or self.last_ts <= next_ob_update.ts
 
-        if self.until_ts is not None:
-            if self.until_ts < min(next_trade.ts, next_ob_update.ts):
-                self.logger.info("Ended by until ts")
+            if self.until_ts is not None:
+                if self.until_ts < min(next_trade.ts, next_ob_update.ts):
+                    self.logger.info("Ended by until ts")
 
-                raise StopIteration
+                    raise StopIteration
 
-        if next_trade is not None and next_ob_update is not None:
-            if next_trade.ts < next_ob_update.ts:
-                self.logger.debug(
-                    f'Trade event is ealry: {next_trade.ts.strftime("%Y-%m-%d %H:%M:%S")} < {next_ob_update.ts.strftime("%Y-%m-%d %H:%M:%S")}',                    
-                )
+            is_ob_updated = False
+
+            if next_trade is not None and next_ob_update is not None:
+                if next_trade.ts < next_ob_update.ts:
+                    self.logger.debug(
+                        f'Trade event is ealry: {next_trade.ts.strftime("%Y-%m-%d %H:%M:%S")} < {next_ob_update.ts.strftime("%Y-%m-%d %H:%M:%S")}',                    
+                    )
+
+                    self.router.on_historical_trade(next_trade)
+                    self._update_last_ts(next_trade.ts)
+
+                    self._use_historical_trade()
+
+                else: 
+                    self.logger.debug(
+                        f'Order book updata event is ealry: {next_trade.ts.strftime("%Y-%m-%d %H:%M:%S")} > {next_ob_update.ts.strftime("%Y-%m-%d %H:%M:%S")}',
+                    )
+
+                    self.router.on_historical_order_book_update(next_ob_update)
+                    self._update_last_ts(next_ob_update.ts)
+
+                    self._use_next_historical_order_book_update()
+
+                    is_ob_updated = True
+            
+            elif next_trade is not None:
+                self.logger.debug("Has only trade event")
 
                 self.router.on_historical_trade(next_trade)
                 self._update_last_ts(next_trade.ts)
 
                 self._use_historical_trade()
-
-            else: 
-                self.logger.debug(
-                    f'Order book updata event is ealry: {next_trade.ts.strftime("%Y-%m-%d %H:%M:%S")} > {next_ob_update.ts.strftime("%Y-%m-%d %H:%M:%S")}',
-                )
+            
+            elif next_ob_update is not None:
+                self.logger.debug("Has only order book update event")
 
                 self.router.on_historical_order_book_update(next_ob_update)
                 self._update_last_ts(next_ob_update.ts)
 
                 self._use_next_historical_order_book_update()
-        
-        elif next_trade is not None:
-            self.logger.debug("Has only trade event")
 
-            self.router.on_historical_trade(next_trade)
-            self._update_last_ts(next_trade.ts)
+                is_ob_updated = True
 
-            self._use_historical_trade()
-        
-        elif next_ob_update is not None:
-            self.logger.debug("Has only order book update event")
+            else:
+                self.logger.info("Ended")
 
-            self.router.on_historical_order_book_update(next_ob_update)
-            self._update_last_ts(next_ob_update.ts)
+                raise StopIteration
+            
+            if not self.until_ob_update:
+                break
 
-            self._use_next_historical_order_book_update()
-
-        else:
-            self.logger.info("Ended")
-
-            raise StopIteration
+            if is_ob_updated:
+                break
 
     def _get_next_historical_trade(self) -> HistoricalTradeEvent|None:
         if self.next_historical_trade is not None:

@@ -32,6 +32,13 @@ class Side(Enum):
             return value
         else:
             return -value
+    
+    @staticmethod
+    def unsidded(value):
+        if value >= 0:
+            return (Side.Buy, value)
+        else:
+            return (Side.Sell, -value)
 
 
 # TODO: make as class Price(Decimal)
@@ -62,7 +69,7 @@ class MarketOrder:
     def __repr__(self):
         return str(self)
 
-    def __eq__(self, other: LimitOrder):
+    def __eq__(self, other: MarketOrder):
         assert self.side == other.side
         return self.quantity == other.quantity
 

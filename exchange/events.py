@@ -21,6 +21,7 @@ class HistoricalTradeEvent(EventBase):
     # TODO: implement __str__
 
 
+# TODO: rename HistoricalOrderBookUpdateEvent
 class HistoricalOrderBookUpdate(EventBase):
     def __init__(self, snapshot: OrderBookSnaphot, ts: Timestamp):
         super().__init__(ts)

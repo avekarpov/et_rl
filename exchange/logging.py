@@ -20,4 +20,4 @@ def default_config(level = INFO):
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S',
     )
-    logging.getLogger("matplotlib").setLevel(logging.CRITICAL)
+    logging.getLogger("matplotlib").disabled = True

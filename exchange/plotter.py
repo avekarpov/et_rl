@@ -18,7 +18,6 @@ class Plotter(Logger):
 
         self.window_size = timedelta(hours=1)
 
-        # TODO: change to time interval
         self.refresh_rate = 500
         self.inited = False
 
@@ -82,9 +81,9 @@ class Plotter(Logger):
 
         self._clear(self.trades)
 
-    def _clear(self, events, mult=1):
+    def _clear(self, events):
         if self.window_size != timedelta():
-            while events[0].ts + self.window_size * mult < events[-1].ts:
+            while events[0].ts + self.window_size < events[-1].ts:
                 events.pop(0)
 
     def build(self):
